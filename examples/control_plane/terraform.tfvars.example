@@ -1,3 +1,35 @@
-resource_group_name = "really-great-resource-group-name"
+# Basic Configuration
+resource_group_name = "dd-log-automation-rg"
 subscription_id     = "00000000-00aa-000a-a000-00aa0aa0a0aa"
-location            = "South Central US"
+location            = "East US"
+
+# Control Plane Configuration
+control_plane_id = "prod001"
+
+# Datadog Configuration (Required)
+datadog_api_key = "your-32-character-datadog-api-key"
+datadog_site    = "datadoghq.com"  # or datadoghq.eu, us3.datadoghq.com, etc.
+
+# Monitored Subscriptions
+monitored_subscriptions = [
+  "12345678-1234-1234-1234-123456789abc",
+  "87654321-4321-4321-4321-cba987654321"
+]
+
+# Optional: Container Configuration
+# image_registry     = "datadoghq.azurecr.io"
+# deployer_image_tag = "latest"
+
+# Optional: Logging Configuration
+# log_level         = "INFO"
+# datadog_telemetry = false
+
+# Optional: Custom Storage Account
+# storage_connection_string = "DefaultEndpointsProtocol=https;AccountName=..."
+
+# Optional: Tags
+tags = {
+  Environment = "Production"
+  ManagedBy   = "Terraform"
+  Owner       = "DataOps"
+}
