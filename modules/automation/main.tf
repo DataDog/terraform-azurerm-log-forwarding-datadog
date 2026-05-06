@@ -61,6 +61,7 @@ locals {
     AZURE_CLIENT_ID                          = ""
     AZURE_TENANT_ID                          = ""
     AZURE_SUBSCRIPTION_ID                    = data.azurerm_subscription.current.subscription_id
+    CONTROL_PLANE_REGION                     = var.location
   }
 }
 
@@ -243,7 +244,6 @@ resource "azurerm_linux_function_app" "scaling_task" {
       WEBSITE_CONTENTSHARE = local.resource_names.scaling_task
       RESOURCE_GROUP       = var.resource_group_name
       FORWARDER_IMAGE      = var.forwarder_image
-      CONTROL_PLANE_REGION = var.location
       PII_SCRUBBER_RULES   = var.pii_scrubber_rules
       SCALING_PERCENTAGE   = "0.8"
     }
