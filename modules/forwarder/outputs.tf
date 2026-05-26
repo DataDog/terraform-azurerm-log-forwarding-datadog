@@ -7,24 +7,24 @@
 # ==========================================
 
 output "storage_account_name" {
-  description = "Name of the created storage account"
-  value       = azurerm_storage_account.forwarder_storage.name
+  description = "Name of the storage account (created or existing)"
+  value       = local.storage_account_name
 }
 
 output "storage_account_id" {
-  description = "ID of the created storage account"
-  value       = azurerm_storage_account.forwarder_storage.id
+  description = "ID of the storage account (created or existing)"
+  value       = local.storage_account_id
 }
 
 output "storage_account_primary_access_key" {
   description = "Primary access key of the storage account"
-  value       = azurerm_storage_account.forwarder_storage.primary_access_key
+  value       = local.storage_primary_access_key
   sensitive   = true
 }
 
 output "storage_account_primary_blob_endpoint" {
   description = "Primary blob endpoint of the storage account"
-  value       = azurerm_storage_account.forwarder_storage.primary_blob_endpoint
+  value       = local.storage_primary_blob_endpoint
 }
 
 # ==========================================
@@ -45,12 +45,12 @@ output "container_app_environment_name" {
 # Container App Job Outputs
 # ==========================================
 
-output "container_app_job_id" {
-  description = "ID of the container app job"
-  value       = azurerm_container_app_job.forwarder.id
+output "container_app_job_ids" {
+  description = "IDs of the container app jobs"
+  value       = azurerm_container_app_job.forwarder[*].id
 }
 
-output "container_app_job_name" {
-  description = "Name of the container app job"
-  value       = azurerm_container_app_job.forwarder.name
+output "container_app_job_names" {
+  description = "Names of the container app jobs"
+  value       = azurerm_container_app_job.forwarder[*].name
 }

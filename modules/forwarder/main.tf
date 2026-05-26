@@ -28,14 +28,34 @@ data "azurerm_client_config" "current" {}
 # ==========================================
 
 locals {
-  storage_connection_string = "DefaultEndpointsProtocol=https;AccountName=${azurerm_storage_account.forwarder_storage.name};EndpointSuffix=core.windows.net;AccountKey=${azurerm_storage_account.forwarder_storage.primary_access_key}"
+  create_storage_account = var.existing_storage_account_id == null
+
+  storage_account_name       = local.create_storage_account ? azurerm_storage_account.forwarder_storage[0].name : data.azurerm_storage_account.existing[0].name
+  storage_account_id         = local.create_storage_account ? azurerm_storage_account.forwarder_storage[0].id : data.azurerm_storage_account.existing[0].id
+  storage_primary_access_key = local.create_storage_account ? azurerm_storage_account.forwarder_storage[0].primary_access_key : data.azurerm_storage_account.existing[0].primary_access_key
+  storage_primary_blob_endpoint = local.create_storage_account ? azurerm_storage_account.forwarder_storage[0].primary_blob_endpoint : data.azurerm_storage_account.existing[0].primary_blob_endpoint
+
+  storage_connection_string = "DefaultEndpointsProtocol=https;AccountName=${local.storage_account_name};EndpointSuffix=core.windows.net;AccountKey=${local.storage_primary_access_key}"
 }
 
 # ==========================================
-# Storage Account
+# Existing Storage Account Lookup
+# ==========================================
+
+data "azurerm_storage_account" "existing" {
+  count = local.create_storage_account ? 0 : 1
+
+  name                = regex("[^/]+$", var.existing_storage_account_id)
+  resource_group_name = regex("resourceGroups/([^/]+)", var.existing_storage_account_id)[0]
+}
+
+# ==========================================
+# Storage Account (created only when not using existing)
 # ==========================================
 
 resource "azurerm_storage_account" "forwarder_storage" {
+  count = local.create_storage_account ? 1 : 0
+
   name                            = var.storage_account_name
   resource_group_name             = data.azurerm_resource_group.current.name
   location                        = var.location
@@ -51,11 +71,13 @@ resource "azurerm_storage_account" "forwarder_storage" {
 }
 
 # ==========================================
-# Storage Account Management Policy
+# Storage Account Management Policy (created only when not using existing)
 # ==========================================
 
 resource "azurerm_storage_management_policy" "forwarder_lifecycle" {
-  storage_account_id = azurerm_storage_account.forwarder_storage.id
+  count = local.create_storage_account ? 1 : 0
+
+  storage_account_id = azurerm_storage_account.forwarder_storage[0].id
 
   rule {
     name    = "delete-old-blobs"
@@ -93,7 +115,9 @@ resource "azurerm_container_app_environment" "forwarder_env" {
 # ==========================================
 
 resource "azurerm_container_app_job" "forwarder" {
-  name                         = var.job_name
+  count = var.forwarder_count
+
+  name                         = var.forwarder_count > 1 ? "${var.job_name}-${count.index}" : var.job_name
   location                     = var.location
   resource_group_name          = data.azurerm_resource_group.current.name
   container_app_environment_id = azurerm_container_app_environment.forwarder_env.id
@@ -132,7 +156,7 @@ resource "azurerm_container_app_job" "forwarder" {
       }
       env {
         name  = "CONFIG_ID"
-        value = "standalone-forwarder"
+        value = "standalone-forwarder-${count.index}"
       }
     }
   }

@@ -163,6 +163,42 @@ variable "schedule_expression" {
 }
 
 # ==========================================
+# Existing Storage Account (Bring Your Own)
+# ==========================================
+
+variable "existing_storage_account_id" {
+  description = <<-EOT
+    Resource ID of an existing storage account to use instead of creating a new one.
+    When set, the module skips storage account and lifecycle policy creation.
+    The existing account must be in the same region as the forwarder and have
+    Azure Diagnostic Settings pointed at it.
+    Example: "/subscriptions/.../resourceGroups/.../providers/Microsoft.Storage/storageAccounts/mystorageaccount"
+  EOT
+  type        = string
+  default     = null
+}
+
+# ==========================================
+# Scaling
+# ==========================================
+
+variable "forwarder_count" {
+  description = <<-EOT
+    Number of forwarder Container App Jobs to deploy.
+    Each job runs independently on the same schedule, draining from the same storage account.
+    Increase this when a single forwarder cannot keep up with log volume.
+    Each additional forwarder adds 2 CPU / 4 GiB (or your configured resource allocation).
+  EOT
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.forwarder_count >= 1 && var.forwarder_count <= 15
+    error_message = "Forwarder count must be between 1 and 15."
+  }
+}
+
+# ==========================================
 # Storage Account Configuration
 # ==========================================
 
