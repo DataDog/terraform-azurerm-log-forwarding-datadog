@@ -16,13 +16,17 @@ terraform {
   }
 }
 
+# Locals for resource naming and configuration
 locals {
+  # Use provided control_plane_id or generate a random one
   control_plane_id = var.control_plane_id != null && var.control_plane_id != "" ? var.control_plane_id : random_string.control_plane_id[0].result
 
+  # Extract unique subscription IDs from monitored resource groups
   monitored_subscriptions = distinct([
     for rg in values(var.monitored_resource_groups) : rg.subscription_id
   ])
 
+  # Resource naming convention
   resource_names = {
     storage_account          = "lfostorage${local.control_plane_id}"
     resources_task           = "resources-task-${local.control_plane_id}"
@@ -34,11 +38,14 @@ locals {
     deployer_task            = "deployer-task-${local.control_plane_id}"
   }
 
+  # Container images
   deployer_image_url = "${var.image_registry}/deployer-caj:${var.deployer_image_tag}"
 
+  # Storage connection string for control plane tasks
   storage_connection_string = "DefaultEndpointsProtocol=https;AccountName=${azurerm_storage_account.control_plane.name};EndpointSuffix=${azurerm_storage_account.control_plane.primary_blob_endpoint != "" ? "core.windows.net" : ""};AccountKey=${azurerm_storage_account.control_plane.primary_access_key}"
 }
 
+# Generate random control plane ID if not provided
 resource "random_string" "control_plane_id" {
   count   = var.control_plane_id == null || var.control_plane_id == "" ? 1 : 0
   length  = 12
@@ -55,6 +62,8 @@ resource "azurerm_resource_group" "resource_group" {
   tags = var.tags
 }
 
+# Storage Account for Control Plane
+# Used by all control plane tasks for cache and coordination
 resource "azurerm_storage_account" "control_plane" {
   name                            = local.resource_names.storage_account
   resource_group_name             = azurerm_resource_group.resource_group.name
@@ -75,6 +84,7 @@ resource "azurerm_storage_account" "control_plane" {
   tags = var.tags
 }
 
+# Blob container for control plane cache
 resource "azurerm_storage_container" "cache" {
   name                  = local.resource_names.cache_container
   storage_account_id    = azurerm_storage_account.control_plane.id
@@ -83,6 +93,7 @@ resource "azurerm_storage_container" "cache" {
   depends_on = [azurerm_storage_account.control_plane]
 }
 
+# Lifecycle management policy to clean up old cache blobs
 resource "azurerm_storage_management_policy" "lifecycle" {
   storage_account_id = azurerm_storage_account.control_plane.id
 
@@ -107,6 +118,8 @@ resource "azurerm_storage_management_policy" "lifecycle" {
 # Control Plane Container App Infrastructure
 # =====================================================
 
+# Container Apps Environment for Control Plane Tasks
+# Provides the shared execution environment for the three control plane jobs
 resource "azurerm_container_app_environment" "control_plane_env" {
   name                = local.resource_names.control_plane_env
   location            = azurerm_resource_group.resource_group.location
@@ -115,6 +128,8 @@ resource "azurerm_container_app_environment" "control_plane_env" {
   tags = var.tags
 }
 
+# Resources Task Container App Job
+# Discovers and tracks all log-generating Azure resources across monitored subscriptions
 resource "azurerm_container_app_job" "resources_task" {
   name                         = local.resource_names.resources_task
   location                     = azurerm_resource_group.resource_group.location
@@ -124,12 +139,14 @@ resource "azurerm_container_app_job" "resources_task" {
   replica_timeout_in_seconds = 300
   replica_retry_limit        = 0
 
+  # Schedule trigger configuration
   schedule_trigger_config {
     cron_expression          = "*/5 * * * *"
     parallelism              = 1
     replica_completion_count = 1
   }
 
+  # Container template
   template {
     container {
       name   = "resources-task"
@@ -137,6 +154,7 @@ resource "azurerm_container_app_job" "resources_task" {
       cpu    = 0.5
       memory = "1Gi"
 
+      # Environment variables for resources task
       env {
         name        = "AzureWebJobsStorage"
         secret_name = "connection-string"
@@ -180,6 +198,7 @@ resource "azurerm_container_app_job" "resources_task" {
     }
   }
 
+  # Secrets for resources task
   secret {
     name  = "connection-string"
     value = local.storage_connection_string
@@ -189,6 +208,7 @@ resource "azurerm_container_app_job" "resources_task" {
     value = var.datadog_api_key
   }
 
+  # System-assigned managed identity for authentication
   identity {
     type = "SystemAssigned"
   }
@@ -201,6 +221,8 @@ resource "azurerm_container_app_job" "resources_task" {
   ]
 }
 
+# Scaling Task Container App Job
+# Intelligently manages log forwarder lifecycle - creates, scales, and deletes forwarders
 resource "azurerm_container_app_job" "scaling_task" {
   name                         = local.resource_names.scaling_task
   location                     = azurerm_resource_group.resource_group.location
@@ -210,12 +232,14 @@ resource "azurerm_container_app_job" "scaling_task" {
   replica_timeout_in_seconds = 600
   replica_retry_limit        = 0
 
+  # Schedule trigger configuration
   schedule_trigger_config {
     cron_expression          = "*/5 * * * *"
     parallelism              = 1
     replica_completion_count = 1
   }
 
+  # Container template
   template {
     container {
       name   = "scaling-task"
@@ -223,6 +247,7 @@ resource "azurerm_container_app_job" "scaling_task" {
       cpu    = 0.5
       memory = "1Gi"
 
+      # Environment variables for scaling task
       env {
         name        = "AzureWebJobsStorage"
         secret_name = "connection-string"
@@ -270,6 +295,7 @@ resource "azurerm_container_app_job" "scaling_task" {
     }
   }
 
+  # Secrets for scaling task
   secret {
     name  = "connection-string"
     value = local.storage_connection_string
@@ -279,6 +305,7 @@ resource "azurerm_container_app_job" "scaling_task" {
     value = var.datadog_api_key
   }
 
+  # System-assigned managed identity for authentication
   identity {
     type = "SystemAssigned"
   }
@@ -291,6 +318,8 @@ resource "azurerm_container_app_job" "scaling_task" {
   ]
 }
 
+# Diagnostic Settings Task Container App Job
+# Automatically configures Azure Diagnostic Settings on discovered resources
 resource "azurerm_container_app_job" "diagnostic_settings_task" {
   name                         = local.resource_names.diagnostic_settings_task
   location                     = azurerm_resource_group.resource_group.location
@@ -300,12 +329,14 @@ resource "azurerm_container_app_job" "diagnostic_settings_task" {
   replica_timeout_in_seconds = 300
   replica_retry_limit        = 0
 
+  # Schedule trigger configuration
   schedule_trigger_config {
     cron_expression          = "*/5 * * * *"
     parallelism              = 1
     replica_completion_count = 1
   }
 
+  # Container template
   template {
     container {
       name   = "diagnostic-settings-task"
@@ -313,6 +344,7 @@ resource "azurerm_container_app_job" "diagnostic_settings_task" {
       cpu    = 0.5
       memory = "1Gi"
 
+      # Environment variables for diagnostic settings task
       env {
         name        = "AzureWebJobsStorage"
         secret_name = "connection-string"
@@ -352,6 +384,7 @@ resource "azurerm_container_app_job" "diagnostic_settings_task" {
     }
   }
 
+  # Secrets for diagnostic settings task
   secret {
     name  = "connection-string"
     value = local.storage_connection_string
@@ -361,6 +394,7 @@ resource "azurerm_container_app_job" "diagnostic_settings_task" {
     value = var.datadog_api_key
   }
 
+  # System-assigned managed identity for authentication
   identity {
     type = "SystemAssigned"
   }
@@ -377,6 +411,8 @@ resource "azurerm_container_app_job" "diagnostic_settings_task" {
 # Deployer Container App Infrastructure
 # =====================================================
 
+# Container Apps Environment for Deployer Task
+# Provides the execution environment for the deployer container app job
 resource "azurerm_container_app_environment" "deployer_env" {
   name                = local.resource_names.deployer_env
   location            = azurerm_resource_group.resource_group.location
@@ -385,21 +421,26 @@ resource "azurerm_container_app_environment" "deployer_env" {
   tags = var.tags
 }
 
+# Container App Job for Deployer Task
+# Automatically updates control plane container app jobs when new versions are available
+# Runs on a schedule to check for updates from the public storage account
 resource "azurerm_container_app_job" "deployer_task" {
   name                         = local.resource_names.deployer_task
   location                     = azurerm_resource_group.resource_group.location
   resource_group_name          = azurerm_resource_group.resource_group.name
   container_app_environment_id = azurerm_container_app_environment.deployer_env.id
 
-  replica_timeout_in_seconds = 1800
+  replica_timeout_in_seconds = 1800 # 30 minutes
   replica_retry_limit        = 1
 
+  # Schedule trigger configuration
   schedule_trigger_config {
     cron_expression          = var.deployer_schedule
     parallelism              = 1
     replica_completion_count = 1
   }
 
+  # Container template
   template {
     container {
       name   = local.resource_names.deployer_task
@@ -407,42 +448,52 @@ resource "azurerm_container_app_job" "deployer_task" {
       cpu    = 0.5
       memory = "1Gi"
 
+      # Environment variables for deployer task
       env {
         name        = "AzureWebJobsStorage"
         secret_name = "connection-string"
       }
+
       env {
         name  = "SUBSCRIPTION_ID"
         value = data.azurerm_subscription.current.subscription_id
       }
+
       env {
         name  = "RESOURCE_GROUP"
         value = var.resource_group_name
       }
+
       env {
         name  = "CONTROL_PLANE_ID"
         value = local.control_plane_id
       }
+
       env {
         name  = "CONTROL_PLANE_REGION"
         value = var.location
       }
+
       env {
         name        = "DD_API_KEY"
         secret_name = "dd-api-key"
       }
+
       env {
         name  = "DD_SITE"
         value = var.datadog_site
       }
+
       env {
         name  = "DD_TELEMETRY"
         value = tostring(var.datadog_telemetry)
       }
+
       env {
         name  = "STORAGE_ACCOUNT_URL"
         value = var.storage_account_url
       }
+
       env {
         name  = "LOG_LEVEL"
         value = var.log_level
@@ -450,15 +501,18 @@ resource "azurerm_container_app_job" "deployer_task" {
     }
   }
 
+  # Secrets for deployer task
   secret {
     name  = "connection-string"
     value = local.storage_connection_string
   }
+
   secret {
     name  = "dd-api-key"
     value = var.datadog_api_key
   }
 
+  # System-assigned managed identity for authentication
   identity {
     type = "SystemAssigned"
   }
@@ -472,9 +526,11 @@ resource "azurerm_container_app_job" "deployer_task" {
 }
 
 # =====================================================
-# Role Assignments for Control Plane Task Identities
+# Role Assignments for Control Plane Task Managed Identities
 # =====================================================
 
+# Resources Task: Monitoring Reader on each monitored subscription
+# Allows read-only access to discover resources
 resource "azurerm_role_assignment" "resources_task_monitoring_reader" {
   for_each = toset(local.monitored_subscriptions)
 
@@ -487,6 +543,8 @@ resource "azurerm_role_assignment" "resources_task_monitoring_reader" {
   depends_on = [azurerm_container_app_job.resources_task]
 }
 
+# Scaling Task: Contributor on each monitored resource group
+# Allows creation and management of forwarder resources
 resource "azurerm_role_assignment" "scaling_task_contributor" {
   for_each = var.monitored_resource_groups
 
@@ -499,6 +557,8 @@ resource "azurerm_role_assignment" "scaling_task_contributor" {
   depends_on = [azurerm_container_app_job.scaling_task]
 }
 
+# Diagnostic Settings Task: Monitoring Contributor on each monitored subscription
+# Allows creation and modification of diagnostic settings
 resource "azurerm_role_assignment" "diagnostic_settings_task_monitoring_contributor" {
   for_each = toset(local.monitored_subscriptions)
 
@@ -511,6 +571,8 @@ resource "azurerm_role_assignment" "diagnostic_settings_task_monitoring_contribu
   depends_on = [azurerm_container_app_job.diagnostic_settings_task]
 }
 
+# Diagnostic Settings Task: Reader and Data Access on each monitored resource group
+# Allows read access to storage accounts in monitored resource groups
 resource "azurerm_role_assignment" "diagnostic_settings_task_reader_data_access" {
   for_each = var.monitored_resource_groups
 
@@ -524,9 +586,11 @@ resource "azurerm_role_assignment" "diagnostic_settings_task_reader_data_access"
 }
 
 # =====================================================
-# Role Assignments for Deployer Task Identity
+# Role Assignments for Deployer Task Managed Identity
 # =====================================================
 
+# Deployer Task: Website Contributor on automation resource group
+# Allows the deployer to update container app jobs via the management plane
 resource "azurerm_role_assignment" "deployer_task_website_contributor" {
   scope                            = azurerm_resource_group.resource_group.id
   role_definition_id               = data.azurerm_role_definition.website_contributor.id
@@ -537,6 +601,8 @@ resource "azurerm_role_assignment" "deployer_task_website_contributor" {
   depends_on = [azurerm_container_app_job.deployer_task]
 }
 
+# Deployer Task: Monitoring Contributor on each monitored subscription
+# Required for the initial run to configure diagnostic settings
 resource "azurerm_role_assignment" "deployer_task_monitoring_contributor" {
   for_each = toset(local.monitored_subscriptions)
 
@@ -549,6 +615,8 @@ resource "azurerm_role_assignment" "deployer_task_monitoring_contributor" {
   depends_on = [azurerm_container_app_job.deployer_task]
 }
 
+# Deployer Task: Contributor on each monitored resource group
+# Allows the initial run to create forwarder resources
 resource "azurerm_role_assignment" "deployer_task_contributor" {
   for_each = var.monitored_resource_groups
 
