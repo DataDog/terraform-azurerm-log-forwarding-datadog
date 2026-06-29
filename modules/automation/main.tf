@@ -33,7 +33,6 @@ locals {
     scaling_task             = "scaling-task-${local.control_plane_id}"
     diagnostic_settings_task = "diagnostic-settings-task-${local.control_plane_id}"
     cache_container          = "control-plane-cache"
-    control_plane_env        = "control-plane-env-${local.control_plane_id}"
     deployer_env             = "dd-log-forwarder-env-${local.control_plane_id}"
     deployer_task            = "deployer-task-${local.control_plane_id}"
   }
@@ -118,23 +117,13 @@ resource "azurerm_storage_management_policy" "lifecycle" {
 # Control Plane Container App Infrastructure
 # =====================================================
 
-# Container Apps Environment for Control Plane Tasks
-# Provides the shared execution environment for the three control plane jobs
-resource "azurerm_container_app_environment" "control_plane_env" {
-  name                = local.resource_names.control_plane_env
-  location            = azurerm_resource_group.resource_group.location
-  resource_group_name = azurerm_resource_group.resource_group.name
-
-  tags = var.tags
-}
-
 # Resources Task Container App Job
 # Discovers and tracks all log-generating Azure resources across monitored subscriptions
 resource "azurerm_container_app_job" "resources_task" {
   name                         = local.resource_names.resources_task
   location                     = azurerm_resource_group.resource_group.location
   resource_group_name          = azurerm_resource_group.resource_group.name
-  container_app_environment_id = azurerm_container_app_environment.control_plane_env.id
+  container_app_environment_id = azurerm_container_app_environment.deployer_env.id
 
   replica_timeout_in_seconds = 300
   replica_retry_limit        = 0
@@ -216,7 +205,7 @@ resource "azurerm_container_app_job" "resources_task" {
   tags = var.tags
 
   depends_on = [
-    azurerm_container_app_environment.control_plane_env,
+    azurerm_container_app_environment.deployer_env,
     azurerm_storage_account.control_plane
   ]
 }
@@ -227,7 +216,7 @@ resource "azurerm_container_app_job" "scaling_task" {
   name                         = local.resource_names.scaling_task
   location                     = azurerm_resource_group.resource_group.location
   resource_group_name          = azurerm_resource_group.resource_group.name
-  container_app_environment_id = azurerm_container_app_environment.control_plane_env.id
+  container_app_environment_id = azurerm_container_app_environment.deployer_env.id
 
   replica_timeout_in_seconds = 600
   replica_retry_limit        = 0
@@ -313,7 +302,7 @@ resource "azurerm_container_app_job" "scaling_task" {
   tags = var.tags
 
   depends_on = [
-    azurerm_container_app_environment.control_plane_env,
+    azurerm_container_app_environment.deployer_env,
     azurerm_storage_account.control_plane
   ]
 }
@@ -324,7 +313,7 @@ resource "azurerm_container_app_job" "diagnostic_settings_task" {
   name                         = local.resource_names.diagnostic_settings_task
   location                     = azurerm_resource_group.resource_group.location
   resource_group_name          = azurerm_resource_group.resource_group.name
-  container_app_environment_id = azurerm_container_app_environment.control_plane_env.id
+  container_app_environment_id = azurerm_container_app_environment.deployer_env.id
 
   replica_timeout_in_seconds = 300
   replica_retry_limit        = 0
@@ -402,7 +391,7 @@ resource "azurerm_container_app_job" "diagnostic_settings_task" {
   tags = var.tags
 
   depends_on = [
-    azurerm_container_app_environment.control_plane_env,
+    azurerm_container_app_environment.deployer_env,
     azurerm_storage_account.control_plane
   ]
 }
@@ -411,8 +400,8 @@ resource "azurerm_container_app_job" "diagnostic_settings_task" {
 # Deployer Container App Infrastructure
 # =====================================================
 
-# Container Apps Environment for Deployer Task
-# Provides the execution environment for the deployer container app job
+# Container Apps Environment for all control plane tasks
+# Shared execution environment for the deployer and the three control plane jobs
 resource "azurerm_container_app_environment" "deployer_env" {
   name                = local.resource_names.deployer_env
   location            = azurerm_resource_group.resource_group.location
