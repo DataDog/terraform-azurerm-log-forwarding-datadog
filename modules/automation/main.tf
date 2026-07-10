@@ -139,7 +139,7 @@ resource "azurerm_container_app_job" "resources_task" {
 
   # Schedule trigger configuration
   schedule_trigger_config {
-    cron_expression          = "*/5 * * * *"
+    cron_expression = "*/5 * * * *"
   }
 
   # Container template
@@ -230,7 +230,7 @@ resource "azurerm_container_app_job" "scaling_task" {
 
   # Schedule trigger configuration
   schedule_trigger_config {
-    cron_expression          = "3/5 * * * *"
+    cron_expression = "3/5 * * * *"
   }
 
   # Container template
@@ -325,7 +325,7 @@ resource "azurerm_container_app_job" "diagnostic_settings_task" {
 
   # Schedule trigger configuration
   schedule_trigger_config {
-    cron_expression          = "*/5 * * * *"
+    cron_expression = "*/5 * * * *"
   }
 
   # Container template
@@ -417,7 +417,7 @@ resource "azurerm_container_app_job" "deployer_task" {
 
   # Schedule trigger configuration
   schedule_trigger_config {
-    cron_expression          = var.deployer_schedule
+    cron_expression = var.deployer_schedule
   }
 
   # Container template
@@ -514,9 +514,9 @@ resource "azurerm_container_app_job" "deployer_task" {
 resource "azurerm_role_assignment" "resources_task_monitoring_reader" {
   for_each = toset(local.monitored_subscriptions)
 
-  scope                            = "/subscriptions/${each.value}"
-  role_definition_id               = data.azurerm_role_definition.monitoring_reader.id
-  principal_id                     = azurerm_container_app_job.resources_task.identity[0].principal_id
+  scope              = "/subscriptions/${each.value}"
+  role_definition_id = data.azurerm_role_definition.monitoring_reader.id
+  principal_id       = azurerm_container_app_job.resources_task.identity[0].principal_id
   # The ddlfo prefix is required. The uninstall script checks for this prefix when removing role assignments.
   description                      = "ddlfo${local.control_plane_id}"
   skip_service_principal_aad_check = true
@@ -529,9 +529,9 @@ resource "azurerm_role_assignment" "resources_task_monitoring_reader" {
 resource "azurerm_role_assignment" "scaling_task_contributor" {
   for_each = var.monitored_resource_groups
 
-  scope                            = "/subscriptions/${each.value.subscription_id}/resourceGroups/${each.value.resource_group_name}"
-  role_definition_id               = data.azurerm_role_definition.contributor.id
-  principal_id                     = azurerm_container_app_job.scaling_task.identity[0].principal_id
+  scope              = "/subscriptions/${each.value.subscription_id}/resourceGroups/${each.value.resource_group_name}"
+  role_definition_id = data.azurerm_role_definition.contributor.id
+  principal_id       = azurerm_container_app_job.scaling_task.identity[0].principal_id
   # The ddlfo prefix is required. The uninstall script checks for this prefix when removing role assignments.
   description                      = "ddlfo${local.control_plane_id}"
   skip_service_principal_aad_check = true
@@ -544,9 +544,9 @@ resource "azurerm_role_assignment" "scaling_task_contributor" {
 resource "azurerm_role_assignment" "diagnostic_settings_task_monitoring_contributor" {
   for_each = toset(local.monitored_subscriptions)
 
-  scope                            = "/subscriptions/${each.value}"
-  role_definition_id               = data.azurerm_role_definition.monitoring_contributor.id
-  principal_id                     = azurerm_container_app_job.diagnostic_settings_task.identity[0].principal_id
+  scope              = "/subscriptions/${each.value}"
+  role_definition_id = data.azurerm_role_definition.monitoring_contributor.id
+  principal_id       = azurerm_container_app_job.diagnostic_settings_task.identity[0].principal_id
   # The ddlfo prefix is required. The uninstall script checks for this prefix when removing role assignments.
   description                      = "ddlfo${local.control_plane_id}"
   skip_service_principal_aad_check = true
@@ -559,9 +559,9 @@ resource "azurerm_role_assignment" "diagnostic_settings_task_monitoring_contribu
 resource "azurerm_role_assignment" "diagnostic_settings_task_reader_data_access" {
   for_each = var.monitored_resource_groups
 
-  scope                            = "/subscriptions/${each.value.subscription_id}/resourceGroups/${each.value.resource_group_name}"
-  role_definition_id               = data.azurerm_role_definition.reader_data_access.id
-  principal_id                     = azurerm_container_app_job.diagnostic_settings_task.identity[0].principal_id
+  scope              = "/subscriptions/${each.value.subscription_id}/resourceGroups/${each.value.resource_group_name}"
+  role_definition_id = data.azurerm_role_definition.reader_data_access.id
+  principal_id       = azurerm_container_app_job.diagnostic_settings_task.identity[0].principal_id
   # The ddlfo prefix is required. The uninstall script checks for this prefix when removing role assignments.
   description                      = "ddlfo${local.control_plane_id}"
   skip_service_principal_aad_check = true
@@ -576,9 +576,9 @@ resource "azurerm_role_assignment" "diagnostic_settings_task_reader_data_access"
 # Deployer Task: Website Contributor on automation resource group
 # Allows the deployer to update container app jobs via the management plane
 resource "azurerm_role_assignment" "deployer_task_container_apps_jobs_contributor" {
-  scope                            = azurerm_resource_group.resource_group.id
-  role_definition_id               = data.azurerm_role_definition.container_apps_jobs_contributor.id
-  principal_id                     = azurerm_container_app_job.deployer_task.identity[0].principal_id
+  scope              = azurerm_resource_group.resource_group.id
+  role_definition_id = data.azurerm_role_definition.container_apps_jobs_contributor.id
+  principal_id       = azurerm_container_app_job.deployer_task.identity[0].principal_id
   # The ddlfo prefix is required. The uninstall script checks for this prefix when removing role assignments.
   description                      = "ddlfo${local.control_plane_id}"
   skip_service_principal_aad_check = true
@@ -591,9 +591,9 @@ resource "azurerm_role_assignment" "deployer_task_container_apps_jobs_contributo
 resource "azurerm_role_assignment" "deployer_task_monitoring_contributor" {
   for_each = toset(local.monitored_subscriptions)
 
-  scope                            = "/subscriptions/${each.value}"
-  role_definition_id               = data.azurerm_role_definition.monitoring_contributor.id
-  principal_id                     = azurerm_container_app_job.deployer_task.identity[0].principal_id
+  scope              = "/subscriptions/${each.value}"
+  role_definition_id = data.azurerm_role_definition.monitoring_contributor.id
+  principal_id       = azurerm_container_app_job.deployer_task.identity[0].principal_id
   # The ddlfo prefix is required. The uninstall script checks for this prefix when removing role assignments.
   description                      = "ddlfo${local.control_plane_id}"
   skip_service_principal_aad_check = true
@@ -606,9 +606,9 @@ resource "azurerm_role_assignment" "deployer_task_monitoring_contributor" {
 resource "azurerm_role_assignment" "deployer_task_contributor" {
   for_each = var.monitored_resource_groups
 
-  scope                            = "/subscriptions/${each.value.subscription_id}/resourceGroups/${each.value.resource_group_name}"
-  role_definition_id               = data.azurerm_role_definition.contributor.id
-  principal_id                     = azurerm_container_app_job.deployer_task.identity[0].principal_id
+  scope              = "/subscriptions/${each.value.subscription_id}/resourceGroups/${each.value.resource_group_name}"
+  role_definition_id = data.azurerm_role_definition.contributor.id
+  principal_id       = azurerm_container_app_job.deployer_task.identity[0].principal_id
   # The ddlfo prefix is required. The uninstall script checks for this prefix when removing role assignments.
   description                      = "ddlfo${local.control_plane_id}"
   skip_service_principal_aad_check = true
