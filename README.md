@@ -2,7 +2,7 @@
 
 Terraform modules for deploying [Datadog Automated Log Forwarding for Azure](https://github.com/DataDog/azure-log-forwarding-orchestration) to your Azure environment.
 
-These modules handle the infrastructure provisioning side of log forwarding. It creates the resource groups, storage accounts, container app environments, and function apps that run the orchestration system.
+These modules handle the infrastructure provisioning side of log forwarding. It creates the resource groups, storage accounts, container app environments, and container app jobs that run the orchestration system.
 
 ## What This Does
 
@@ -19,7 +19,7 @@ There's also [`automated-resource-group`](./modules/automated-resource-group) fo
 
 ## Prerequisites
 
-- Terraform >= 1.0
+- Terraform >= 1.7
 - Azure subscription with Contributor access
 - AzureRM provider ~> 4.0
 - Datadog account and [API key](https://docs.datadoghq.com/account_management/api-app-keys/)

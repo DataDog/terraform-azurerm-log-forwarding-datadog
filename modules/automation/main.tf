@@ -31,7 +31,7 @@ locals {
     storage_account          = "lfostorage${local.control_plane_id}"
     resources_task           = "resources-task-${local.control_plane_id}"
     scaling_task             = "scaling-task-${local.control_plane_id}"
-    diagnostic_settings_task = "diagnostic-settings-task-${local.control_plane_id}"
+    diagnostic_settings_task = "diag-settings-task-${local.control_plane_id}"
     cache_container          = "control-plane-cache"
     deployer_env             = "dd-log-forwarder-env-${local.control_plane_id}"
     deployer_task            = "deployer-task-${local.control_plane_id}"
@@ -117,6 +117,15 @@ resource "azurerm_storage_management_policy" "lifecycle" {
 # Control Plane Container App Infrastructure
 # =====================================================
 
+# Container Apps Environment for all control plane tasks and deployer
+resource "azurerm_container_app_environment" "deployer_env" {
+  name                = local.resource_names.deployer_env
+  location            = azurerm_resource_group.resource_group.location
+  resource_group_name = azurerm_resource_group.resource_group.name
+
+  tags = var.tags
+}
+
 # Resources Task Container App Job
 # Discovers and tracks all log-generating Azure resources across monitored subscriptions
 resource "azurerm_container_app_job" "resources_task" {
@@ -131,8 +140,6 @@ resource "azurerm_container_app_job" "resources_task" {
   # Schedule trigger configuration
   schedule_trigger_config {
     cron_expression          = "*/5 * * * *"
-    parallelism              = 1
-    replica_completion_count = 1
   }
 
   # Container template
@@ -223,9 +230,7 @@ resource "azurerm_container_app_job" "scaling_task" {
 
   # Schedule trigger configuration
   schedule_trigger_config {
-    cron_expression          = "*/5 * * * *"
-    parallelism              = 1
-    replica_completion_count = 1
+    cron_expression          = "3/5 * * * *"
   }
 
   # Container template
@@ -321,14 +326,12 @@ resource "azurerm_container_app_job" "diagnostic_settings_task" {
   # Schedule trigger configuration
   schedule_trigger_config {
     cron_expression          = "*/5 * * * *"
-    parallelism              = 1
-    replica_completion_count = 1
   }
 
   # Container template
   template {
     container {
-      name   = "diagnostic-settings-task"
+      name   = "diag-settings-task"
       image  = "${var.image_registry}/diagnostic-settings-task:latest"
       cpu    = 0.5
       memory = "1Gi"
@@ -400,16 +403,6 @@ resource "azurerm_container_app_job" "diagnostic_settings_task" {
 # Deployer Container App Infrastructure
 # =====================================================
 
-# Container Apps Environment for all control plane tasks
-# Shared execution environment for the deployer and the three control plane jobs
-resource "azurerm_container_app_environment" "deployer_env" {
-  name                = local.resource_names.deployer_env
-  location            = azurerm_resource_group.resource_group.location
-  resource_group_name = azurerm_resource_group.resource_group.name
-
-  tags = var.tags
-}
-
 # Container App Job for Deployer Task
 # Automatically updates control plane container app jobs when new versions are available
 # Runs on a schedule to check for updates from the public storage account
@@ -420,13 +413,11 @@ resource "azurerm_container_app_job" "deployer_task" {
   container_app_environment_id = azurerm_container_app_environment.deployer_env.id
 
   replica_timeout_in_seconds = 1800 # 30 minutes
-  replica_retry_limit        = 1
+  replica_retry_limit        = 0
 
   # Schedule trigger configuration
   schedule_trigger_config {
     cron_expression          = var.deployer_schedule
-    parallelism              = 1
-    replica_completion_count = 1
   }
 
   # Container template
@@ -584,9 +575,9 @@ resource "azurerm_role_assignment" "diagnostic_settings_task_reader_data_access"
 
 # Deployer Task: Website Contributor on automation resource group
 # Allows the deployer to update container app jobs via the management plane
-resource "azurerm_role_assignment" "deployer_task_website_contributor" {
+resource "azurerm_role_assignment" "deployer_task_container_apps_jobs_contributor" {
   scope                            = azurerm_resource_group.resource_group.id
-  role_definition_id               = data.azurerm_role_definition.website_contributor.id
+  role_definition_id               = data.azurerm_role_definition.container_apps_jobs_contributor.id
   principal_id                     = azurerm_container_app_job.deployer_task.identity[0].principal_id
   # The ddlfo prefix is required. The uninstall script checks for this prefix when removing role assignments.
   description                      = "ddlfo${local.control_plane_id}"
@@ -652,5 +643,10 @@ removed {
 
 removed {
   from = azurerm_linux_function_app.diagnostic_settings_task
+  lifecycle { destroy = true }
+}
+
+removed {
+  from = azurerm_role_assignment.deployer_task_website_contributor
   lifecycle { destroy = true }
 }
