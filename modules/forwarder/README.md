@@ -122,7 +122,7 @@ See the [examples/forwarder](../../examples/forwarder) directory for a complete 
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | ~> 4.0 |
 
@@ -133,7 +133,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [azurerm_container_app_environment.forwarder_env](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_environment) | resource |
 | [azurerm_container_app_job.forwarder](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_job) | resource |
 | [azurerm_storage_account.forwarder_storage](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account) | resource |
@@ -144,7 +144,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_datadog_api_key"></a> [datadog\_api\_key](#input\_datadog\_api\_key) | Datadog API Key for authentication.<br/>Must be exactly 32 characters long.<br/>This is stored as a secret in the Container App Job. | `string` | n/a | yes |
 | <a name="input_datadog_site"></a> [datadog\_site](#input\_datadog\_site) | Datadog Site to send logs to.<br/>Must be one of the official Datadog sites. | `string` | `"datadoghq.com"` | no |
 | <a name="input_environment_name"></a> [environment\_name](#input\_environment\_name) | Name of the Container App Managed Environment for the Forwarder.<br/>Must be between 2 and 60 characters long. | `string` | `"datadog-log-forwarder-env"` | no |
@@ -166,7 +166,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_container_app_environment_id"></a> [container\_app\_environment\_id](#output\_container\_app\_environment\_id) | ID of the container app environment |
 | <a name="output_container_app_environment_name"></a> [container\_app\_environment\_name](#output\_container\_app\_environment\_name) | Name of the container app environment |
 | <a name="output_container_app_job_id"></a> [container\_app\_job\_id](#output\_container\_app\_job\_id) | ID of the container app job |

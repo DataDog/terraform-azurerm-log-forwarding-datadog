@@ -90,8 +90,8 @@ No modules.
 ## Requirements
 
 | Name | Version |
-|------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
+| ---- | ------- |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.7 |
 | <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | ~> 4.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.0 |
 
@@ -102,38 +102,36 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [azurerm_container_app_environment.deployer_env](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_environment) | resource |
 | [azurerm_container_app_job.deployer_task](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_job) | resource |
-| [azurerm_linux_function_app.diagnostic_settings_task](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_function_app) | resource |
-| [azurerm_linux_function_app.resources_task](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_function_app) | resource |
-| [azurerm_linux_function_app.scaling_task](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_function_app) | resource |
+| [azurerm_container_app_job.diagnostic_settings_task](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_job) | resource |
+| [azurerm_container_app_job.resources_task](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_job) | resource |
+| [azurerm_container_app_job.scaling_task](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_job) | resource |
 | [azurerm_resource_group.resource_group](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) | resource |
+| [azurerm_role_assignment.deployer_task_container_apps_jobs_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.deployer_task_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.deployer_task_monitoring_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
-| [azurerm_role_assignment.deployer_task_website_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.diagnostic_settings_task_monitoring_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.diagnostic_settings_task_reader_data_access](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.resources_task_monitoring_reader](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.scaling_task_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
-| [azurerm_service_plan.control_plane](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/service_plan) | resource |
 | [azurerm_storage_account.control_plane](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account) | resource |
 | [azurerm_storage_container.cache](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_container) | resource |
 | [azurerm_storage_management_policy.lifecycle](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_management_policy) | resource |
-| [azurerm_storage_share.function_content](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_share) | resource |
 | [random_string.control_plane_id](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [azurerm_client_config.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config) | data source |
+| [azurerm_role_definition.container_apps_jobs_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/role_definition) | data source |
 | [azurerm_role_definition.contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/role_definition) | data source |
 | [azurerm_role_definition.monitoring_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/role_definition) | data source |
 | [azurerm_role_definition.monitoring_reader](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/role_definition) | data source |
 | [azurerm_role_definition.reader_data_access](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/role_definition) | data source |
-| [azurerm_role_definition.website_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/role_definition) | data source |
 | [azurerm_subscription.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/subscription) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_cache_retention_days"></a> [cache\_retention\_days](#input\_cache\_retention\_days) | Number of days to retain cache blobs before automatic deletion | `number` | `7` | no |
 | <a name="input_control_plane_id"></a> [control\_plane\_id](#input\_control\_plane\_id) | Optional control plane identifier. If not provided, a random 12-character alphanumeric<br/>string will be generated. This ID is used in resource naming to ensure uniqueness.<br/><br/>Requirements:<br/>- Must be lowercase alphanumeric only (a-z, 0-9)<br/>- Must be 12 characters or less<br/>- Will be used in storage account name (24 char limit: "lfostorage" + control\_plane\_id)<br/><br/>Example: "abc123def456" | `string` | `null` | no |
 | <a name="input_datadog_api_key"></a> [datadog\_api\_key](#input\_datadog\_api\_key) | Datadog API key for sending logs and metrics | `string` | n/a | yes |
@@ -156,15 +154,15 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
-| <a name="output_container_app_environment_id"></a> [container\_app\_environment\_id](#output\_container\_app\_environment\_id) | Resource ID of the container app environment |
-| <a name="output_container_app_environment_name"></a> [container\_app\_environment\_name](#output\_container\_app\_environment\_name) | Name of the container app environment |
+| ---- | ----------- |
+| <a name="output_container_app_environment_id"></a> [container\_app\_environment\_id](#output\_container\_app\_environment\_id) | Resource ID of the deployer container app environment |
+| <a name="output_container_app_environment_name"></a> [container\_app\_environment\_name](#output\_container\_app\_environment\_name) | Name of the deployer container app environment |
 | <a name="output_control_plane_id"></a> [control\_plane\_id](#output\_control\_plane\_id) | The control plane identifier used for resource naming |
 | <a name="output_deployer_task_id"></a> [deployer\_task\_id](#output\_deployer\_task\_id) | Resource ID of the deployer container app job |
 | <a name="output_deployer_task_name"></a> [deployer\_task\_name](#output\_deployer\_task\_name) | Name of the deployer container app job |
 | <a name="output_deployer_task_principal_id"></a> [deployer\_task\_principal\_id](#output\_deployer\_task\_principal\_id) | Managed identity principal ID of the deployer task (for additional role assignments) |
-| <a name="output_diagnostic_settings_task_principal_id"></a> [diagnostic\_settings\_task\_principal\_id](#output\_diagnostic\_settings\_task\_principal\_id) | Managed identity principal ID of the diagnostic settings task function app (for additional role assignments) |
+| <a name="output_diagnostic_settings_task_principal_id"></a> [diagnostic\_settings\_task\_principal\_id](#output\_diagnostic\_settings\_task\_principal\_id) | Managed identity principal ID of the diagnostic settings task container app job (for additional role assignments) |
 | <a name="output_resource_group_name"></a> [resource\_group\_name](#output\_resource\_group\_name) | Name of the automation resource group |
-| <a name="output_resources_task_principal_id"></a> [resources\_task\_principal\_id](#output\_resources\_task\_principal\_id) | Managed identity principal ID of the resources task function app (for additional role assignments) |
-| <a name="output_scaling_task_principal_id"></a> [scaling\_task\_principal\_id](#output\_scaling\_task\_principal\_id) | Managed identity principal ID of the scaling task function app (for additional role assignments) |
+| <a name="output_resources_task_principal_id"></a> [resources\_task\_principal\_id](#output\_resources\_task\_principal\_id) | Managed identity principal ID of the resources task container app job (for additional role assignments) |
+| <a name="output_scaling_task_principal_id"></a> [scaling\_task\_principal\_id](#output\_scaling\_task\_principal\_id) | Managed identity principal ID of the scaling task container app job (for additional role assignments) |
 <!-- END_TF_DOCS -->

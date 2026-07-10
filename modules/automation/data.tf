@@ -30,7 +30,7 @@ data "azurerm_role_definition" "reader_data_access" {
   scope = data.azurerm_subscription.current.id
 }
 
-data "azurerm_role_definition" "website_contributor" {
-  name  = "Website Contributor"
+data "azurerm_role_definition" "container_apps_jobs_contributor" {
+  name  = "Container Apps Jobs Contributor"
   scope = data.azurerm_subscription.current.id
 }
